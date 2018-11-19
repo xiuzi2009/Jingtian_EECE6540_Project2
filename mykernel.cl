@@ -17,15 +17,15 @@ __kernel void simpleMultiply(
 	 int row = get_global_id (1);
 	 int col = get_global_id (0);
 	 float sum = 0.0f;
-	 int i=0;
-	 int j=0;
-	 for (j=0; j<150; j++) 
+	 int i=0;                     // i is counter for elements of matrix A and B
+	 int j=0;                     // j is counter for loop
+	 for (j=0; j<150; j++)  
 	 	{
-	 		if (j%2==0)
+	 		if (j%2==0)           // Use j to mux the operation of elements in matrix
 			{		
 	 		
 				 for (i=0; i<widthA; i++) 
-		 		{		if(i==2)
+		 		{		if(i==2)  //the third elements in matrix B is 0, 1 can't be divided by it. 
 		 					{
 		 						sum += 1/(inputA[row*widthA + i]+10*j) ;
 		 					}
@@ -38,7 +38,7 @@ __kernel void simpleMultiply(
 			}		
 	
   		   		
-			else
+			else          
 			{
 		 		 for (i=0; i<widthA; i++) 
 		 		{		
@@ -55,23 +55,5 @@ __kernel void simpleMultiply(
 			}
 		}
 		outputC[row*widthB + col] = sum;
-		
 
-    /* get global position in Y direction */
-   // int even = get_global_id (1);
-    /* get global position in X direction */
-   // int odd = get_global_id (0);
-
- 
-	//barrier(CLK_LOCAL_MEM_FENCE);
-	//float sum = 0.0f;
-
-    /* calculate result of one element of Matrix C */
-    //for (int i=0; i<100; i++) 
-		//{
-       // global_result = 1/(odd+2*i+1) - 1/(even+2*i+1);
-     
-    	//}
-      //barrier(CLK_GLOBAL_MEM_FENCE);
-	 // *global_result=odd;
 }

@@ -19,7 +19,7 @@ void cleanup();
 #define MAX_SOURCE_SIZE (0x100000)
 #define DEVICE_NAME_LEN 128
 static char dev_name[DEVICE_NAME_LEN];
-//////////////////////////////////
+
 static float A[3] = {
   1.0f,  5.0f,  9.0f,
   };
@@ -34,7 +34,6 @@ static float B[3] = {
 static float X[5] = {
   3.0f,  3.0f,  3.0f,  3.0f, 3.0f
 };
-  /////////////////////////////////////////
 
 int main()
 {
@@ -54,7 +53,6 @@ int main()
     size_t source_size;
 
 
-///////////////////////////////////////////////
 	int wA=3;
 	int hA=1;
 	int wB=1;
@@ -64,7 +62,6 @@ int main()
 	int wC = wB;
 	int hC = hA;
 	
-///////////////////////////////////////////////
 #ifdef __APPLE__
     /* Get Platform and Device Info */
     clGetPlatformIDs(1, NULL, &platformCount);
@@ -149,25 +146,13 @@ int main()
       printf("Failed to create kernel.\n");
       exit(1);
     }
-//////////////////////////////////
+
 float *C = (float *)calloc (hC * wC ,  sizeof(float));
 printf ("Initialization C=\n");
 
-
-//////////////////////////////////
-	  
-	//  float *result=0;
-
     /* Create Buffer */
 
-   // cl_mem result_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(result), NULL, NULL);
-	//clEnqueueWriteBuffer(command_queue, result_buffer, CL_TRUE, 0,
-      //      sizeof(float), result, 0, NULL, NULL);
 
-
-    /* Set the kernel arguments */
-
-	////////////////////////////////////////////////////////////
 	   /* We assume A, B, C are float arrays which
     have been declared and initialized */
     /* allocate space for Matrix A on the device */
@@ -196,6 +181,7 @@ printf ("Initialization C=\n");
     cl_mem bufferC = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
             wC*hC*sizeof(float), NULL, &ret);
 
+	 /* Set the kernel arguments */
 
      clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&bufferC);
     clSetKernelArg(kernel, 1, sizeof(cl_int), (void *)&wA);
@@ -209,25 +195,15 @@ printf ("Initialization C=\n");
 	clSetKernelArg(kernel, 7, sizeof(cl_int), (void *)&wX);////
     clSetKernelArg(kernel, 8, sizeof(cl_int), (void *)&hX);////
     clSetKernelArg(kernel, 9, sizeof(cl_mem), (void *)&bufferX);
-	/////////////////////////////////////////////////////////////////
-//    clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&result_buffer);
 
     /* Execute the kernel */
 	
-   // size_t globalws[1]={1};
-    //size_t localws [1]={1};
-   // ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL,
-    //  globalws, localws, 0, NULL, NULL);
-/////////////////////////////////////////////////////////////////////
     size_t globalws[2]={wC, hC};
     size_t localws[2] = {1, 1};
     ret = clEnqueueNDRangeKernel(command_queue, kernel, 2, NULL,
       globalws, localws, 0, NULL, NULL);
-///////////////////////////////////////////////////////////////////////
 
 
-
-	
     /* it is important to check the return value.
       for example, when enqueueNDRangeKernel may fail when Work group size
       does not divide evenly into global work size */
@@ -238,43 +214,25 @@ printf ("Initialization C=\n");
 
     /* Copy the output data back to the host */
 	
-  // clEnqueueReadBuffer(command_queue, result_buffer, CL_TRUE, 0, sizeof(result),
-//		   &result, 0, NULL, NULL);
-////////////////////////////////////////////
 		 clEnqueueReadBuffer(command_queue, bufferC, CL_TRUE, 0, wC*hC*sizeof(float),
 			 (void *)C, 0, NULL, NULL);
-////////////////////////////////////////////
 
     /* Verify result */
 
-
-//	printf ("Result =\n");
- //   printf ("%f ", *result*4);
-
-
-
-///////////////////////////////////////
  		 printf ("Result Pi=\n");
     for (int i = 0; i < wC*hC; i++) {
 	
       printf ("%f ", C[i]*4);
     }   
     printf("\n");
-/////////////////////////////////////////
-
 
     /* free resources */
 
-
-  //  free(result);
-
-
-///////////////////////////////////////////
 clReleaseMemObject(bufferA);
 clReleaseMemObject(bufferB);
 clReleaseMemObject(bufferC);
-clReleaseMemObject(bufferX);////////
-////////	clReleaseMemObject(result_buffer);
+clReleaseMemObject(bufferX);
+
     clReleaseCommandQueue(command_queue);
     clReleaseKernel(kernel);
     clReleaseProgram(program);
