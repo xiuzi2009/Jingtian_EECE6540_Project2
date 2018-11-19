@@ -19,23 +19,23 @@ void cleanup();
 #define MAX_SOURCE_SIZE (0x100000)
 #define DEVICE_NAME_LEN 128
 static char dev_name[DEVICE_NAME_LEN];
+//////////////////////////////////
+static float A[3] = {
+  1.0f,  5.0f,  9.0f,
+  };
 
-static float A[8] = {
-  1.0f,  1.0f,  1.0f,  1.0f,
-  1.0f,  1.0f,  1.0f,  1.0f};
+static float B[3] = {
+  3.0f,  
 
-static float B[24] = {
-  2.0f,  2.0f,  2.0f,  2.0f, 2.0f, 2.0f,
-  2.0f,  2.0f,  2.0f,  2.0f, 2.0f, 2.0f,
-  2.0f,  2.0f,  2.0f,  2.0f, 2.0f, 2.0f,
-  2.0f,  2.0f,  2.0f,  2.0f, 2.0f, 2.0f};
+  7.0f , 
 
-static float X[24] = {
-  3.0f,  3.0f,  3.0f,  3.0f, 3.0f, 3.0f,
-  3.0f,  3.0f,  3.0f,  3.0f, 3.0f, 3.0f,
-  3.0f,  3.0f,  3.0f,  3.0f, 3.0f, 3.0f,
-  3.0f,  3.0f,  3.0f,  3.0f, 3.0f, 3.0f};
-  
+  0.0f};
+
+static float X[5] = {
+  3.0f,  3.0f,  3.0f,  3.0f, 3.0f
+};
+  /////////////////////////////////////////
+
 int main()
 {
     cl_uint platformCount;
@@ -53,15 +53,18 @@ int main()
     char *source_str;
     size_t source_size;
 
-    int wA=4;
-    int hA=2;
-    int wB=6;
-    int hB=4;
-	int wX=6;
-	int hX=4;
-	int wC = wB;
-    int hC = hA;
 
+///////////////////////////////////////////////
+	int wA=3;
+	int hA=1;
+	int wB=1;
+	int hB=3;
+	int wX=6;
+	int hX=1;
+	int wC = wB;
+	int hC = hA;
+	
+///////////////////////////////////////////////
 #ifdef __APPLE__
     /* Get Platform and Device Info */
     clGetPlatformIDs(1, NULL, &platformCount);
@@ -146,16 +149,26 @@ int main()
       printf("Failed to create kernel.\n");
       exit(1);
     }
+//////////////////////////////////
+float *C = (float *)calloc (hC * wC ,  sizeof(float));
+printf ("Initialization C=\n");
 
-    float *C = (float *)calloc (hC * wC ,  sizeof(float));
-	printf ("Initialization C=\n");
-    for (int i = 0; i < wC*hC; i++) {
 
-      printf ("%f ", C[i]);
-    }
-    printf("\n");
+//////////////////////////////////
+	  
+	//  float *result=0;
 
-    /* We assume A, B, C are float arrays which
+    /* Create Buffer */
+
+   // cl_mem result_buffer = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(result), NULL, NULL);
+	//clEnqueueWriteBuffer(command_queue, result_buffer, CL_TRUE, 0,
+      //      sizeof(float), result, 0, NULL, NULL);
+
+
+    /* Set the kernel arguments */
+
+	////////////////////////////////////////////////////////////
+	   /* We assume A, B, C are float arrays which
     have been declared and initialized */
     /* allocate space for Matrix A on the device */
     cl_mem bufferA = clCreateBuffer(context, CL_MEM_READ_ONLY,
@@ -183,8 +196,8 @@ int main()
     cl_mem bufferC = clCreateBuffer(context, CL_MEM_WRITE_ONLY,
             wC*hC*sizeof(float), NULL, &ret);
 
-    /* Set the kernel arguments */
-    clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&bufferC);
+
+     clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&bufferC);
     clSetKernelArg(kernel, 1, sizeof(cl_int), (void *)&wA);
     clSetKernelArg(kernel, 2, sizeof(cl_int), (void *)&hA);
     clSetKernelArg(kernel, 3, sizeof(cl_int), (void *)&wB);
@@ -196,12 +209,25 @@ int main()
 	clSetKernelArg(kernel, 7, sizeof(cl_int), (void *)&wX);////
     clSetKernelArg(kernel, 8, sizeof(cl_int), (void *)&hX);////
     clSetKernelArg(kernel, 9, sizeof(cl_mem), (void *)&bufferX);
+	/////////////////////////////////////////////////////////////////
+//    clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&result_buffer);
 
     /* Execute the kernel */
+	
+   // size_t globalws[1]={1};
+    //size_t localws [1]={1};
+   // ret = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL,
+    //  globalws, localws, 0, NULL, NULL);
+/////////////////////////////////////////////////////////////////////
     size_t globalws[2]={wC, hC};
-    size_t localws[2] = {2, 2};
+    size_t localws[2] = {1, 1};
     ret = clEnqueueNDRangeKernel(command_queue, kernel, 2, NULL,
       globalws, localws, 0, NULL, NULL);
+///////////////////////////////////////////////////////////////////////
+
+
+
+	
     /* it is important to check the return value.
       for example, when enqueueNDRangeKernel may fail when Work group size
       does not divide evenly into global work size */
@@ -211,24 +237,44 @@ int main()
     }
 
     /* Copy the output data back to the host */
-    clEnqueueReadBuffer(command_queue, bufferC, CL_TRUE, 0, wC*hC*sizeof(float),
-         (void *)C, 0, NULL, NULL);
+	
+  // clEnqueueReadBuffer(command_queue, result_buffer, CL_TRUE, 0, sizeof(result),
+//		   &result, 0, NULL, NULL);
+////////////////////////////////////////////
+		 clEnqueueReadBuffer(command_queue, bufferC, CL_TRUE, 0, wC*hC*sizeof(float),
+			 (void *)C, 0, NULL, NULL);
+////////////////////////////////////////////
 
     /* Verify result */
-		 printf ("Result C=\n");
+
+
+//	printf ("Result =\n");
+ //   printf ("%f ", *result*4);
+
+
+
+///////////////////////////////////////
+ 		 printf ("Result Pi=\n");
     for (int i = 0; i < wC*hC; i++) {
 	
-      printf ("%f ", C[i]);
-    }
+      printf ("%f ", C[i]*4);
+    }   
     printf("\n");
+/////////////////////////////////////////
+
 
     /* free resources */
-    free(C);
 
-    clReleaseMemObject(bufferA);
-    clReleaseMemObject(bufferB);
-    clReleaseMemObject(bufferC);
-	clReleaseMemObject(bufferX);////////
+
+  //  free(result);
+
+
+///////////////////////////////////////////
+clReleaseMemObject(bufferA);
+clReleaseMemObject(bufferB);
+clReleaseMemObject(bufferC);
+clReleaseMemObject(bufferX);////////
+////////	clReleaseMemObject(result_buffer);
     clReleaseCommandQueue(command_queue);
     clReleaseKernel(kernel);
     clReleaseProgram(program);
